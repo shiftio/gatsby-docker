@@ -6,6 +6,7 @@ export CHARSET=${CHARSET:-utf-8}
 export WORKER_CONNECTIONS=${WORKER_CONNECTIONS:-1024}
 export HTTP_PORT=${HTTP_PORT:-80}
 export NGINX_CONF=/etc/nginx/mushed.conf
+export HTTPS_TRUE=${HTTPS_TRUE:-false}
 
 export PUBLIC_PATH=${PUBLIC_PATH:-/pub}
 
@@ -16,10 +17,17 @@ export CACHE_IGNORE=${CACHE_IGNORE:-html}
 export CACHE_PUBLIC=${CACHE_PUBLIC:-ico|jpg|jpeg|png|gif|svg|js|jsx|css|less|swf|eot|ttf|otf|woff|woff2}
 export CACHE_PUBLIC_EXPIRATION=${CACHE_PUBLIC_EXPIRATION:-1y}
 
-if [ "$TRAILING_SLASH" = false ]; then
-  REWRITE_RULE="rewrite ^(.+)/+\$ \$1 permanent"
+# If our site uses https then we want to add https to the rewrite
+if [ "$HTTPS_TRUE" = false ]; then
+    HTTPS_ADD_REWRITE="\$1/"
 else
-  REWRITE_RULE="rewrite ^([^.]*[^/])\$ \$1/ permanent"
+    HTTPS_ADD_REWRITE="https://\$host\$1/"
+fi
+
+if [ "$TRAILING_SLASH" = false ]; then
+  REWRITE_RULE="rewrite ^(.+)/+\$ $HTTPS_ADD_REWRITE permanent"
+else
+  REWRITE_RULE="rewrite ^([^.]*[^/])\$ $HTTPS_ADD_REWRITE permanent"
 fi
 
 if [ -f /etc/nginx/server.conf ]; then
@@ -31,7 +39,7 @@ fi
 # Build config
 cat <<EOF > $NGINX_CONF
 daemon              off;
-worker_processes    1;
+worker_processes    auto;
 user                root;
 
 events {
@@ -102,5 +110,11 @@ EOF
 
 mkdir -p /run/nginx/
 chown -R root:root /var/lib/nginx
+
+if [ -f /etc/nginx/custom.conf ]; then
+  exec nginx -c /etc/nginx/custom.conf
+else
+  exec nginx -c $NGINX_CONF
+fi
 
 exec nginx -c $NGINX_CONF
