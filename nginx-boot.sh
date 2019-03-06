@@ -15,7 +15,7 @@ export GZIP_LEVEL=${GZIP_LEVEL:-6}
 
 export CACHE_IGNORE=${CACHE_IGNORE:-html}
 export CACHE_PUBLIC=${CACHE_PUBLIC:-ico|jpg|jpeg|png|gif|svg|js|jsx|css|less|swf|eot|ttf|otf|woff|woff2}
-export CACHE_PUBLIC_EXPIRATION=${CACHE_PUBLIC_EXPIRATION:-1y}
+export CACHE_PUBLIC_EXPIRATION=${CACHE_PUBLIC_EXPIRATION:-1h}
 
 # If our site uses https then we want to add https to the rewrite
 if [ "$HTTPS_TRUE" = false ]; then
@@ -63,9 +63,9 @@ http {
   large_client_header_buffers 4 16k;
 
   ## Cache open FD
-  open_file_cache max=10000 inactive=3600s;
-  open_file_cache_valid 7200s;
-  open_file_cache_min_uses 2;
+  #open_file_cache max=10000 inactive=3600s;
+  #open_file_cache_valid 7200s;
+  #open_file_cache_min_uses 2;
 
   ## Gzipping is an easy way to reduce page weight
   gzip                on;
